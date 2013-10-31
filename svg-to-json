@@ -1,0 +1,31 @@
+#!/usr/bin/python -O
+
+from json import dumps
+from BeautifulSoup import BeautifulSoup
+
+def run_from_command_line():
+  import argparse
+  parser = argparse.ArgumentParser(description='Convert SVG files to JSON.')
+  parser.add_argument('svg_files', metavar='S', type=file, nargs='+', help='input SVG files')
+  parser.add_argument('--elements', default=['id'], metavar='E', type=str, nargs='*', help='elements to extract')
+  args = parser.parse_args()
+  convert_svg_files_to_json(args.svg_files, args.elements)
+
+def convert_svg_files_to_json(svg_files, elements):
+  for svg_file in svg_files:
+    json = convert_svg_file_to_json(svg_file, elements)
+    open(svg_file.name + '.json', 'w').write(json)
+
+def convert_svg_file_to_json(svg_file, elements):
+  dicts = []
+  svg = svg_file.read()
+  soup = BeautifulSoup(svg, selfClosingTags=['defs', 'sodipodi:namedview'])
+  for path in soup.findAll('path'):
+    path_dict = {k:path[k] for k in elements if k in dict(path.attrs)}
+    if len(path_dict) > 0:
+      dicts.append(path_dict)
+  return dumps(dicts)
+
+if __name__ == '__main__':
+  run_from_command_line()
+
